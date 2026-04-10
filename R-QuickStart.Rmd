@@ -1,0 +1,329 @@
+---
+title: "Introductory R Analysis for Undergraduates"
+output:
+  html_document:
+    number_sections: yes
+    html_math: true
+    theme: white
+    highlight: tango
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+# Minimal setup - only load essential libraries
+knitr::opts_chunk$set(
+  comment = "#>",
+  eval = TRUE,
+  message = FALSE
+)
+
+# Load only necessary packages
+library(dplyr)
+library(ggplot2)  # For data manipulation and plotting
+library(afex)     # For ANOVA and post-hoc tests
+
+
+# Create sample data for demonstrations
+set.seed(123)
+
+# Factorial design data (Condition x Trial)
+data <- data.frame(
+  Condition = rep(c("A", "B"), each = 20),
+  Trial = rep(1:4, each = 5, 2)
+)
+data$Response <- c( rnorm(nrow(data)/2, mean = 50, sd = 10), 
+                    rnorm(nrow(data)/2, mean = 45, sd = 10)  )
+
+write.csv(data, "data.csv", row.names = FALSE)
+
+```
+
+---
+
+## 1. Working with Data from CSV Files
+
+This section covers basic data manipulation operations: reading, binding, merging, aggregating, and saving.
+
+### 1.1 Reading CSV Files
+
+```{r read_csv_example}
+# Read a CSV file (assuming you have data.csv in your working directory)
+df <- read.csv("data.csv")
+
+# View the first few rows
+head(df)
+
+# Check data types
+str(df)
+```
+
+### 1.2 Binding Multiple Data Frames
+
+Combine data from different sources or files.
+
+```{r bind_dataframes}
+# Create sample data frames
+df1 <- data.frame(ID = 1:5, Value = c(10, 20, 30, 40, 50))
+df2 <- data.frame(ID = 6:10, Value = c(60, 70, 80, 90, 100))
+
+# Horizontal binding (side-by-side)
+df_horizontal <- cbind(df1, df2)
+
+df_horizontal
+
+# Vertical binding (stacked)
+df_vertical <- rbind(df1, df2)
+
+df_vertical
+
+# Using bind_rows() (modern approach)
+df_stacked <- bind_rows(df1, df2)
+
+df_stacked
+```
+
+### 1.3 Merging and Indexing Data Frames
+
+Combine data based on common columns (like IDs).
+
+```{r merge_dataframes}
+
+# Create sample data with IDs
+df1 <- data.frame(ID = 1:5, Value1 = rnorm(5))
+df2 <- data.frame(ID = 1:5, Value2 = rnorm(5))
+
+# Merge operation (inner join - only matching IDs)
+df_merged <- merge(df1, df2, by = "ID")
+
+df_merged
+
+# we can select a column by name (or by index):
+df1$ID
+
+# or by using indexing, where we specify which rows AND which columns we want:
+df1[1:5, 1]  # first 5 rows, first column
+
+# we can select rows by index (although sometimes also by name)
+# and get the whole row by leaving the column index empty:
+df1[3,]
+
+df2[c(2:5),]
+
+# Full outer merge (all IDs from both data frames)
+df_full <- merge(df1[c(1:4),], df2[c(2:5),], by = "ID", all = TRUE)
+
+df_full
+```
+
+### 1.4 Aggregating Data
+
+Summarize data by grouping variables.
+
+```{r aggregate_data}
+# Sample data with grouping variable
+data <- expand.grid(
+  Group = factor(rep(c("Group1", "Group2"), each = 20)),
+  Trial = rep(1:4, 40)
+)
+data$Value <- rnorm(nrow(data), mean = 50, sd = 10)
+
+# this is a data frame with 6400 rows:
+str(data)
+
+# Using base R aggregate()
+agg_base <- aggregate(Value ~ Group + Trial, data = data, FUN = mean)
+
+# now we have 8 rows: 2 groups x 4 trials:
+agg_base
+
+# the value of Value for Group1 and Trial 1
+# is the mean of all Value entries in data
+# that have Group == "Group1" and Trial == 1:
+
+# Using dplyr group_by() and summary()
+agg_dplyr <- data %>%
+  group_by(Group, Trial) %>%
+  summarise(Mean = mean(Value, na.rm = TRUE))
+
+agg_plyr
+
+# Using dplyr group_by() and summarise() with multiple statistics
+agg_comprehensive <- data %>%
+  group_by(Group, Trial) %>%
+  summarise(
+    Mean = mean(Value, na.rm = TRUE),
+    SD = sd(Value, na.rm = TRUE),
+    N = n()
+  )
+
+agg_comprehensive
+```
+
+### 1.5 Saving Data
+
+Save your processed data to files.
+
+```{r save_data}
+# Save to CSV
+write.csv(df, "processed_data.csv", row.names = FALSE)
+
+# Save with additional parameters
+write.csv(df, "data_with_special_chars.csv", 
+          row.names = FALSE, na = "NA")
+
+# Save as RDS (R-specific format, preserves all data types)
+saveRDS(df, "data.rds")
+
+# Verify files are created
+file.exists("processed_data.csv")
+```
+
+---
+
+## 2. Creating Standard Plots with ggplot2
+
+This section demonstrates common plot types for visualizing experimental data.
+
+### 2.1 Scatter Plots
+
+```{r scatter_plot}
+# Create sample data with different conditions
+data <- expand.grid(
+  Condition = factor(rep(c("Low", "High"), each = 20)),
+  Trial = rep(1:4, 40),
+  Response = rnorm(nrow(data), mean = 50, sd = 10)
+)
+
+# Basic scatter plot with ggplot2
+p_scatter <- ggplot(data, aes(x = Trial, y = Response)) +
+  geom_point(aes(colour = Condition), alpha = 0.7) +
+  facet_wrap(~Condition) +
+  labs(title = "Response Across Trials by Condition",
+       x = "Trial Number",
+       y = "Response Value")
+
+print(p_scatter)
+```
+
+### 2.2 Bar Charts for Comparing Conditions
+
+```{r bar_chart}
+# Create summary data for bar chart
+summary_data <- data %>%
+  group_by(Condition) %>%
+  summarise(Mean = mean(Response, na.rm = TRUE),
+            SD = sd(Response, na.rm = TRUE)) %>%
+  mutate(Mean = as.numeric(Mean))
+
+# Bar chart with error bars
+p_bar <- ggplot(summary_data, aes(x = Condition, y = Mean)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  geom_errorbar(aes(ymin = Mean - 1.96 * SD, ymax = Mean + 1.96 * SD),
+                width = 0.2, size = 1) +
+  labs(title = "Mean Response by Condition",
+       x = "Condition",
+       y = "Mean Response")
+
+print(p_bar)
+```
+
+### 2.3 Line Graphs to Compare Conditions Over Time
+
+```{r line_graph}
+# Line plot showing trends over trials
+p_line <- ggplot(data, aes(x = Trial, y = Response, colour = Condition, group = Condition)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Response Trajectory Over Trials by Condition",
+       x = "Trial Number",
+       y = "Response Value")
+
+print(p_line)
+```
+
+---
+
+## 3. Simple Statistical Analysis
+
+This section covers basic statistical tests using base R and the `afex` package.
+
+### 3.1 One-Sample t-Test (Base R)
+
+Test if the mean differs significantly from a specified value.
+
+```{r one_sample_t_test}
+# Sample data
+data <- data.frame(
+  Value = c(45, 48, 52, 55, 58, 60)
+)
+
+# Perform one-sample t-test against a hypothesized mean
+t_result <- t.test(data$Value, mu = 50)
+
+# Display results
+t_result
+
+# Interpretation: If p < 0.05, reject the null hypothesis that the mean is 50
+```
+
+### 3.2 Two-Sample t-Test (Base R)
+
+Compare means between two independent groups.
+
+```{r two_sample_t_test}
+# Sample data with two groups
+data <- expand.grid(
+  Group = factor(rep(c("Control", "Treatment"), each = 30)),
+  Value = c(rnorm(30, 45, 10), rnorm(30, 55, 10))
+)
+
+# Two-sample t-test
+t_result <- t.test(data$Value ~ data$Group)
+
+# Display results
+t_result
+
+# Use Welch's t-test by default (more robust for unequal variances)
+```
+
+### 3.3 ANOVA Using `afex` Package
+
+```{r anova_afex}
+# Create a balanced factorial design
+data <- expand.grid(
+  Factor1 = factor(rep(c("Group1", "Group2"), each = 20)),
+  Factor2 = factor(rep(c("LevelA", "LevelB"), each = 20)),
+  Value = rnorm(400, mean = 50, sd = 10)
+)
+
+# Perform ANOVA using afex package
+anova_result <- aov(Value ~ Factor1 * Factor2, data = data)
+
+# Extract ANOVA table
+anova_summary <- summary(anova_result)
+anova_summary
+
+# Perform post-hoc pairwise comparisons with Tukey's HSD
+pairwise_comp <- pairwise.t.test(data$Value, data$Factor1, 
+                                 p.adjust.method = "tukey")
+pairwise_comp
+
+# Using `anova()` with formula interface
+anova_formula <- aov(Value ~ Factor1 * Factor2, data = data)
+anova_result <- anova(anova_formula)
+anova_result
+```
+
+---
+
+```{r wrap_up}
+# This notebook demonstrates foundational R skills for undergraduate analysis.
+# All code is self-contained and can be adapted to various experimental designs.
+
+# Remember:
+# - Always check your data first (head(), str(), summary())
+# - Use meaningful variable names
+# - Document your analysis steps clearly
+# - Use appropriate statistical tests for your research questions
+
+```
