@@ -51,3 +51,7 @@ rsconnect/
 # data files:
 
 *.csv
+*.rds
+
+# output files:
+*.html
