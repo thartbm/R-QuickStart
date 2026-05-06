@@ -37,7 +37,7 @@ The packages above: dplyr and ggplot2, are used for data frame handling and the 
 # library(tidyverse)
 ```
 
-We will not explore the tidyverse any further here.
+We will not explore the tidyverse any further here. However, most modern resources on using R for academic purposes do rely on the tidyverse, for example the free online version of the excellent book "R for Data Science" [https://r4ds.had.co.nz/](https://r4ds.had.co.nz/).
 
 The next bit of code creates an artificial data set to play with. Run it, but no need to understand this next bit of code (yet).
 
