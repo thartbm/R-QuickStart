@@ -256,12 +256,6 @@ ggplot(data, aes(x = trial, y = RT)) +
 
 ```{r bar_chart}
 # Create summary data for bar chart
-# summary_data <- data %>%
-#   group_by(condition) %>%
-#   summarise(Mean = mean(Response, na.rm = TRUE),
-#             SD = sd(Response, na.rm = TRUE)) %>%
-#   mutate(Mean = as.numeric(Mean))
-
 summary_data <- data %>%
   group_by(condition) %>%
   summarise(
@@ -280,8 +274,6 @@ ggplot(summary_data, aes(x = condition, y = Mean)) +
   labs(title = "Mean RT by condition",
        x = "condition",
        y = "mean RT")
-
-# print(p_bar)
 ```
 
 ### 2.3 Line Graphs to Compare Conditions Over Time
