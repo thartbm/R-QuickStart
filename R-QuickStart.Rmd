@@ -164,6 +164,8 @@ You can also use indexing to remove unnecessary columns, or maybe to remove tria
 
 Summarize data by grouping variables.
 
+The file "data.csv" was created right before section 1. If it doesn't load, make sure that chunk of code worked.
+
 ```{r aggregate_data}
 # Sample data with grouping variable
 data <- read.csv('data.csv')
@@ -248,8 +250,6 @@ ggplot(data, aes(x = trial, y = RT)) +
   labs(title = "RT across trials by condition",
        x = "trial",
        y = "RT [s]")
-
-# print(p_scatter)
 ```
 
 ### 2.2 Bar Charts for Comparing Conditions
@@ -279,8 +279,10 @@ ggplot(summary_data, aes(x = condition, y = Mean)) +
 ### 2.3 Line Graphs to Compare Conditions Over Time
 
 ```{r line_graph}
+# read the data in fresh
 data <- read.csv('data.csv')
 
+# summarize the data for the line plot
 summary_data <- data %>%
   group_by(condition, trial) %>%
   summarise(
@@ -323,7 +325,7 @@ t_result <- t.test(data$RT, mu = 0.83)
 # Display results
 t_result
 
-# Interpretation: If p < 0.05, reject the null hypothesis that the mean is 50
+# Interpretation: If p < 0.05, reject the null hypothesis that the mean is 0.83.
 ```
 
 If the p-value is lower than 0.05 (the usual "alpha" level) we can say that there is an effect. This will happen if the "mu" we test the data against falls outside the confidence interval that is listed in the output.
@@ -342,14 +344,14 @@ t_result <- t.test(data$RT ~ data$condition)
 # Display results
 t_result
 
-# This use Welch's t-test by default (more robust for unequal variances)
+# This use Welch's t-test by default. This is more robust for unequal variances, with no down-sides.
 ```
 
 The listed confidence interval is now the confidence interval of the difference between the two samples (conditions). If this does not include 0, the p-value will be lower than 0.95.
 
 ### 3.3 ANOVA Using `afex` Package
 
-The built-in ANOVA function does not use type III errors, which is more or less expected nowadays. Use the `afex` package to get modern ANOVA output.
+The built-in ANOVA function does not use type III errors, which is more or less expected nowadays. Use the `afex` package to get modern ANOVA output. It is installed and loaded at the beginning of this markdown file.
 
 ```{r anova_afex}
 # Example data
@@ -363,6 +365,8 @@ In this case there is a 2x5 repeated measures ANOVA, with the factors "condition
 
 If any of these effects are significant (p < 0.05), you could follow up with post-hoc tests to explore the differences further if there are more than 2 levels. For 2 levels we can see the effect directly in a figure (or by calculating the average within each of the levels).
 
+# 4 Conclusion
+
 This notebook demonstrates foundational R skills for undergraduate analysis.
 All code is self-contained and can be adapted to various experimental designs.
 
@@ -371,4 +375,9 @@ Remember:
  - Use meaningful variable names
  - Document your analysis steps clearly
  - Use appropriate statistical tests for your research questions
+ 
+If you are ready for a deeper dive into R, for some specific purpose, there are many resources available online. For example, the free online book "R for Data Science" [https://r4ds.had.co.nz/](https://r4ds.had.co.nz/) shows more data wrangling techniques, advanced statistics, and in depth reviews of plotting with ggplot2.
 
+The CRAN website (https://cran.r-project.org/) has a huge collection of packages for all kinds of purposes, including many that are relevant for experimental psychology. You can search for packages there, and find instructions on how to install and use them.
+
+I also wrote down my own notes on a variety of topics we deal with in the lab, here: [R-tutorials](https://github.com/thartbm/Rtutorials). These are a bit rougher (they are 5 years old, and do not use the tidyverse), but they show how we do things.
