@@ -276,7 +276,7 @@ summary_data <- data %>%
 ggplot(summary_data, aes(x = condition, y = Mean)) +
   geom_bar(stat = "identity", fill = "steelblue") +
   geom_errorbar(aes(ymin = CI_lo, ymax = CI_hi),
-                width = 0.2, size = 1) +
+                width = 0.2, linewidth = 1) +
   labs(title = "Mean RT by condition",
        x = "condition",
        y = "mean RT")
